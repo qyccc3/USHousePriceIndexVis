@@ -1,10 +1,22 @@
 {
     "states":{
         "Alabama":{
-            "svg":""
+            "svg":"xml_folder/Alabama.xml"
         },
         "Alaska":{
-            "svg":""
+            "svg":"xml_folder/Alaska.xml"
+        },
+        "Arizona":{
+            "svg":"xml_folder/Arizona.xml"
+        },
+        "Arkansas":{
+            "svg":"xml_folder/Arkansas.xml"
+        },
+        "California":{
+            "svg":"xml_folder/California.xml"
+        },
+        "Colorado":{
+            "svg":"xml_folder/Colorado.xml"
         }
     }
 }
