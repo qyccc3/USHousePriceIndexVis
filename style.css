@@ -54,3 +54,32 @@ svg path:hover{
     width:100%;
     display: block;
 }
+
+.stat-rect{
+    height:40px;
+    width: 200px;
+    background-image: linear-gradient(to right,#DE3163, #6495ED);
+    margin-bottom: 10px;
+    display:flex;
+}
+
+.min-value{
+    margin-top: 8px;
+    margin-left: 10px;
+    color: white;
+    font-weight: bolder;
+}
+
+.max-value{
+    margin-top: 8px;
+    margin-left: auto;
+    margin-right: 10px;
+    color:white;
+    font-weight: bolder;
+}
+
+.btn{
+    background-color: #00394f !important;
+    border-color: #00394f !important;
+    color: white !important;
+}
