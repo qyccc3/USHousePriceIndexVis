@@ -340,7 +340,7 @@
                   <div class = "filter-title" style="margin-bottom:-15px">
                      <p>YEAR</p>
                   </div>
-                  <input type="range" class="form-range" min="1992" max="2022" step="1" value="2022" id="year-range" onchange=" year=this.value; show_value(this.value);">
+                  <input type="range" class="form-range" min="1991" max="2022" step="1" value="2022" id="year-range" onchange=" year=this.value; show_value(this.value);">
                   <div style="text-align:center;">
                      <span id="slider_value" style="color:black;font-weight: bolder;">2022</span>
                   </div>
@@ -350,50 +350,32 @@
                      <div class = "filter-title" style="margin-bottom:-15px;">
                         <p>House Types</p>
                      </div>
-                        <div class="filter-value">
-                           <input type="checkbox" id="house" name="house" value="house">
-                           <label for="house">Traditional</label>
-                        </div>
-                        <div class="filter-value">
-                           <input type="checkbox" id="house" name="house" value="house">
-                           <label for="house">Distress-Free</label>
-                        </div>
-                        <div class="filter-value">
-                           <input type="checkbox" id="house" name="house" value="house">
-                           <label for="house">Non-Metro</label>
-                        </div>
+                     <div class="filter-value">
+                        <input type="checkbox" checked class="filter_value" onclick="valueCheckedOnClick(this);"><p title="Traditional houses" style="display:inline; cursor:default;"> Traditional</p><br>
+                        <input type="checkbox" class="filter_value" onclick="valueCheckedOnClick(this);"><p title = "A distress-free property is a home not owned by the bank or not on the brink of foreclosure" style="display:inline; cursor:default;"> Distress-Free</p><br>
+                        <input type="checkbox" class="filter_value" onclick="valueCheckedOnClick(this);"><p  title = "Non-Metro houses are located in areas without the access to metro" style="display:inline; cursor:default;"> Non-Metro</p><br>
+                     </div>
                   </div>
-                  <div id="index-filter" style="margin-bottom:10px;">
-                     <div class = "filter-title" style="margin-bottom:-15px;">
+                  <div id="index-filter" style = "margin-bottom: 10px;">
+                     <div class = "filter-title">
                         <p>Index Types</p>
                      </div>
                      <div class="filter-value">
-                        <input type="checkbox" id="house" name="house" value="house">
-                        <label for="house">Index_nsa</label>
+                        <input type="checkbox" checked class="filter_index" onclick="indexCheckedOnClick(this);"><p title="Non seasonally adjusted house price index" style="display:inline; cursor:default;"> Index_nsa</p><br>
+                        <input type="checkbox" class="filter_index" onclick="indexCheckedOnClick(this);"><p title="Seasonally adjusted house price index" style="display:inline; cursor:default;"> Index_sa</p><br>
+                  </div>
+                  <div id ="flavor-filter">
+                     <div class = "filter-title">
+                        <p>Flavor</p>
                      </div>
                      <div class="filter-value">
-                        <input type="checkbox" id="house" name="house" value="house">
-                        <label for="house">Index_sa</label>
-                     </div>
-                  </div> 
-                  <div id="flavor-filter">
-                     <div class = "filter-title" style="margin-bottom:-15px;">
-                        <p>Flavor Types</p>
-                     </div>
-                     <div class="filter-value">
-                        <input type="checkbox" id="house" name="house" value="house">
-                        <label for="house">Purchase Only</label>
-                     </div>
-                     <div class="filter-value">
-                        <input type="checkbox" id="house" name="house" value="house">
-                        <label for="house">Expanded Data</label>
-                     </div>
-                     <div class="filter-value">
-                        <input type="checkbox" id="house" name="house" value="house">
-                        <label for="house">All Sanctions</label>
+                        <input type="checkbox" checked class="filter_flavor" onclick="flavorCheckedOnClick(this);"><p title= "Purchase-Only Index tracks mortgages used to purchase existing single-family homes" style = "display:inline; cursor:default;"> All-Transactions</p><br>
+                        <input type="checkbox" class="filter_flavor" onclick="flavorCheckedOnClick(this);"><p title="Build on the purchase-only data by adding transcations from FHA and county recorder data" style="display:inline; cursor:default;"> Expanded-Data</p><br>
+                        <input type="checkbox" class="filter_flavor" onclick="flavorCheckedOnClick(this);"><p title="All-Transactions indexes cover conventional and conforming mortgage transactions used to purchase or refinance an existing single-family home" style="display:inline; cursor:default;"> Purchase-Only</p><br>
                      </div>
                   </div>
                </div>
+
                <div class="display">
                   <div id="displayName">
                      <strong>States: </strong>
@@ -408,15 +390,13 @@
          </div>
       </div>
          <script>
-            var year = 2022;
-         </script>
-         <script>
+            let allowhover = true;
             var csvData;
             var stateName;
-            
-         </script>
-         <script>
-            let allowhover = true;
+            var year = 2022;
+            var type_filter = "Traditional";
+            var index_filter = "Index_nsa";
+            var flavor_filter = "All-Transactions";
             Promise.all([
                d3.csv('datasets/cleaned_states_tran_all.csv')
             ]).then(ready);
@@ -429,7 +409,7 @@
                   if(name != null && allowhover){
                      stateName = name;
                      display_color(data);
-                     event.target.style.cssText += 'fill: yellow;';
+                     event.target.style.cssText += 'fill: #FCF55F;';
                      document.getElementById('displayName').innerHTML = "<strong>States: </strong>" + name;
                      var result = data[0].filter(obj => {
                         return obj["State Name"] === name && obj["Year"] == year;
@@ -439,6 +419,7 @@
                   }
                   else{
                      if(allowhover){
+                        display_color(data);
                         document.getElementById('displayName').innerHTML = "<strong>States: </strong>";
                         document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>";
                         document.getElementById('hisMax').innerHTML = "<strong>Max: </strong>";
@@ -453,7 +434,7 @@
                         var states = document.querySelectorAll("[id^='state-map']");
                         stateName = name;
                         display_color(data);
-                        event.target.style.cssText += 'fill: yellow;';
+                        event.target.style.cssText += 'fill: #FCF55F;';
                         var result = data[0].filter(obj => {
                            return obj["State Name"] === event.target.getAttribute('data-name') && obj["Year"] == year;
                         });
@@ -472,6 +453,8 @@
                   allowhover = true;
                   document.getElementById('displayName').innerHTML = "<strong>States: </strong>";
                   document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>";
+                  document.getElementById('hisMax').innerHTML = "<strong>Max: </strong>";
+                  document.getElementById('hisMin').innerHTML = "<strong>Min: </strong>";
                   display_color(data);
                };
             };
@@ -480,7 +463,6 @@
                var result = csvData[0].filter(obj => {
                   return obj["State Name"] === stateName && obj["Year"] == year;
                });
-               document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index_nsa"];
                display_color(csvData);
             };
             function display_color(data){
@@ -521,6 +503,36 @@
                });
                document.getElementById('hisMin').innerHTML = "<strong>Min:</strong> " + min['index_nsa'] + " (" + min['Year'] + ")";
                document.getElementById('hisMax').innerHTML = "<strong>Max:</strong> " + max['index_nsa'] + " (" + max['Year'] + ")";
+            };
+            
+         </script>
+         <script>
+            function valueCheckedOnClick(check){
+            // Select all checkboxes by class
+            var checkboxesList = document.getElementsByClassName("filter_value");
+            for (var i = 0; i < checkboxesList.length; i++) {
+               checkboxesList.item(i).checked = false; // Uncheck all checkboxes
+            }
+
+            check.checked = true; // Checked clicked checkbox
+            }
+
+            function indexCheckedOnClick(check){
+            // Select all checkboxes by class
+               var checkboxesList = document.getElementsByClassName("filter_index");
+               for (var i = 0; i < checkboxesList.length; i++) {
+                  checkboxesList.item(i).checked = false; // Uncheck all checkboxes
+            }
+
+            check.checked = true; // Checked clicked checkbox
+            }
+
+            function flavorCheckedOnClick(check){
+               var checkboxesList = document.getElementsByClassName("filter_flavor");
+               for (var i = 0; i < checkboxesList.length; i++) {
+                  checkboxesList.item(i).checked = false; // Uncheck all checkboxes
+               }
+               check.checked = true; // Checked clicked checkbox
             }
          </script>
          <script src="http://cdnjs.cloudflare.com/ajax/libs/gsap/1.18.0/TweenMax.min.js"></script>

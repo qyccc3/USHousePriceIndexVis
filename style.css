@@ -3,13 +3,12 @@ html, body {
 }
 
 svg path{
-    fill: #00394f;
-    stroke:#eee;
+    stroke:#EEE;
     stroke-width: 3px;
 }
 
 svg path:hover{
-    fill: yellow;
+    fill: #FCF55F;
     cursor: pointer;
 }
 
@@ -36,12 +35,12 @@ svg path:hover{
 
 .display{
     border: #00394f 1px solid;
-    padding-left: 40px;
-    padding-right: 40px;
+    padding-left: 5px;
+    padding-right: 5px;
     padding-bottom: 5px;
     padding-top: 10px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-right: -20px;
+    margin-left: -20px;
     border-radius: 5px;
     margin-bottom: 20px;
     margin-top: 20px;
@@ -58,7 +57,7 @@ svg path:hover{
 .stat-rect{
     height:40px;
     width: 200px;
-    background-image: linear-gradient(to right,#DE3163, #6495ED);
+    background-image: linear-gradient(to left,#DE3163, #6495ED);
     margin-bottom: 10px;
     display:flex;
 }
