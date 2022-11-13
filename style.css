@@ -2,12 +2,13 @@ html, body {
     background-color: white;
 }
 
-svg path{
-    stroke:#EEE;
-    stroke-width: 3px;
+svg g g{
+    fill:#d0d0d0;
+    stroke-width:.17829;
+    stroke:#fff
 }
 
-svg path:hover{
+svg g g:hover{
     fill: #FCF55F;
     cursor: pointer;
 }

@@ -12,9 +12,9 @@ This is a visualization based on HTML, CSS, JavaScript and Python that displays 
 
 **To Dos:**
 
-* [ ] Dataset preprocessing and cleaning
-* [ ] Implement additional filter options
+* [X] Dataset preprocessing and cleaning
+* [X] Implement additional filter options
 * [ ] Implement zoom in and out function when clicking states
 * [ ] Generate the historical graph and future prediction for 52 states
 * [ ] Implement circles on the map that represents different counties
-* [ ] Implement machine learning algorithm for different counties using pyscript and corresponding python library
+* [ ] Implement machine learning algorithm for different counties using pyscript and corresponding python libra
