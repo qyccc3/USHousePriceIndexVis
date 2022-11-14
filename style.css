@@ -2,6 +2,12 @@ html, body {
     background-color: white;
 }
 
+.page-title{
+    margin-bottom: -40px;
+    text-align: center;
+    font-weight: light;
+}
+
 svg g g{
     fill:#d0d0d0;
     stroke-width:.17829;
@@ -14,7 +20,8 @@ svg g g:hover{
 }
 
 .container{
-    width: 100%;
+    margin-left: 0px;
+    padding: 0px;
 }
 
 .filter{
@@ -82,4 +89,5 @@ svg g g:hover{
     background-color: #00394f !important;
     border-color: #00394f !important;
     color: white !important;
+    margin-bottom: 10px;
 }

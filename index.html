@@ -11,14 +11,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM" crossorigin="anonymous"></script>
     <script>
-        //Gloval Variables
-        let allowhover = true;
-        var stateName;
-        var csvData;
-        var year = 2022;
-        var type_filter = "traditional";
-        var index_filter = "index_nsa";
-        var flavor_filter = "all-transactions";
+         // Global variables
+         var year = 2022;
+         var csvData;
+         var type_filter = "traditional";
+         var index_filter = "index_nsa";
+         var flavor_filter = "all-transactions";
+         var curr_selection;
         // Load JSON into SVG
         function loadMap(mapName){
             $.getJSON('json/' + mapName + '.json', function(data){
@@ -61,19 +60,24 @@
             d3.csv('datasets/states_cleaned_data.csv')
         ]).then(ready);
 
-        // Assign all the values and allow hover and select functions
+        // Assign all the values and create all the functions
         function ready(data){
+            curr_selection = "us";
+            //Gloval Variables
+            let allowhover = true;
+            var statename; 
             csvData = data;
             display_color(data);
-
             // Mouse hover over state show status
             document.addEventListener('mouseover', function(event){
                 if(allowhover){
                     var target = event.target.parentElement;
                     if(target.id == "state"){
-                        display_color(data);
-                        var statename = target.getAttribute("state-name");
-                        target.style.cssText += 'fill: #FCF55F;';
+                        if(statename != undefined){
+                           change_color(data, statename);
+                        }
+                        statename = target.getAttribute("state-name");
+                        target.style.cssText += 'fill: #FFFAA0;';
                         document.getElementById('displayName').innerHTML = "<strong>States: </strong>" + statename;
                         var result = data[0].filter(obj => {
                         return obj["state"] === statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
@@ -95,9 +99,9 @@
             document.addEventListener('click', function(event){
                 var target = event.target.parentElement;
                 if(target.id == "state"){
-                     var statename = target.getAttribute("state-name");
-                     display_color(data);
-                     target.style.cssText += 'fill: #FCF55F;';
+                     statename = target.getAttribute("state-name");
+                     tonedown_color(data, statename);
+                     //target.style.cssText += 'fill: #93C572;';
                      var result = data[0].filter(obj => {
                            return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
                      });
@@ -105,14 +109,13 @@
                      document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
                      document.getElementById('displayName').innerHTML = "<strong>States: </strong>" + statename;
                      allowhover = false;
-                    
                      // Zoom in
                      var svg = document.getElementById("us-map");
+                     var animation = document.createElementNS("http://www.w3.org/2000/svg","animate");
                      svg.setAttribute("viewBox", target.getAttribute("view"));
+                     curr_selection = "state";
                 }
             }); 
-
-            // Clear button
             document.getElementById("clearbtn").onclick = function(){clear()};
             function clear(){
                var states = document.querySelectorAll("[id^='state']");
@@ -124,18 +127,13 @@
                document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>";
                document.getElementById('hisMax').innerHTML = "<strong>Max: </strong>";
                document.getElementById('hisMin').innerHTML = "<strong>Min: </strong>";
-               display_color(data);
+
+               display_color(csvData);
                var svg = document.getElementById("us-map");
                svg.setAttribute("viewBox", "0 0 989.98 627.07");
-            }
-            
+               curr_selection = "us";
+            };
          };
-         
-         // Adjust year slider to change scope
-         function show_value(x){
-            document.getElementById("slider_value").innerHTML = x;
-            display_color(csvData);
-         }
        
          // Display color for each state
          function display_color(data){
@@ -165,6 +163,64 @@
             }
          };
 
+         function change_color(data, statename){
+            var states = data[0].filter(state => {
+               return state["year"] == year && state["type"] == type_filter && state["index type"] == index_filter && state["flavor"] == flavor_filter;
+            });
+            var max = states.reduce(function(prev, curr){
+               return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+            });
+            var min = states.reduce(function(prev, curr){
+               return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+            });
+            var range = max["index"] - min["index"];
+            var state = states.filter(state => {
+               return state["state"] == statename;
+            });
+            document.getElementById('min-value-p').innerHTML = min['index'];
+            document.getElementById('max-value-p').innerHTML = max['index'];
+            var ratio = (state[0]["index"] - min["index"]) / range;
+            var red = 100 + (222 - 100) * ratio;
+            var green = 149 - (149 - 49) * ratio;
+            var blue = 237 - (237 - 99) * ratio;
+            var color = "rgb(" + red + "," + green + "," + blue + ")";
+            var result = data[0].filter(obj => {
+                  return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
+            });
+            document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
+            document.querySelector('[state-name="' + statename + '"]').style.cssText += 'fill: ' + color + ';';
+         }
+
+         // Tone down other state color
+         function tonedown_color(data, statename){
+            var states = data[0].filter(state => {
+                  return state["year"] == year && state["type"] == type_filter && state["index type"] == index_filter && state["flavor"] == flavor_filter;
+               });
+            var max = states.reduce(function(prev, curr){
+               return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+            });
+            var min = states.reduce(function(prev, curr){
+               return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+            });
+            document.getElementById('min-value-p').innerHTML = min['index'];
+            document.getElementById('max-value-p').innerHTML = max['index'];
+            var range = max["index"] - min["index"];
+            for(var i = 0; i < states.length; i++){
+               if(states[i]["state"] != statename){
+                  document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: #ECFFDC';
+               }
+               else{
+                  var ratio = (states[i]["index"] - min["index"]) / range;
+                  var red = 100 + (222 - 100) * ratio;
+                  var green = 149 - (149 - 49) * ratio;
+                  var blue = 237 - (237 - 99) * ratio;
+                  var color = "rgb(" + red + "," + green + "," + blue + ")";
+                  document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: ' + color + ';';
+               }
+            }
+            
+         }
+
         // Display historical max and min data
         function display_hist(data, name){
             var states = data[0].filter(state => {
@@ -184,13 +240,41 @@
         function typeCheckedOnClick(check){
             var checkboxes = document.getElementsByClassName("filter_type");
             for(var i = 0; i < checkboxes.length; i++){
-               console.log(checkboxes.item(i));
                checkboxes.item(i).checked = false; // uncheck all checkboxes
             }
             type_filter = check.id;
             check.checked = true; // check the clicked checkbox
-            display_color(csvData);
-        }
+            if(curr_selection == "us"){
+               display_color(csvData);
+            }
+            else{
+               statename = document.getElementById("displayName").innerText.split(": ")[1];
+               change_color(csvData, statename);
+               display_hist(csvData, statename);
+            }
+            if (check.id == "non-metro"){
+               var checkboxes = document.getElementsByClassName("filter_flavor");
+                  for(var i = 0; i < checkboxes.length; i++){
+                     checkboxes.item(i).disabled = true; // disable all checkboxes
+               }
+               var slider = document.getElementById("slider-range");
+               if(slider.value < 1995){
+                  year = 1995;
+                  slider.setAttribute("value", 1995);  
+                  show_value(year);
+               }
+               slider.setAttribute("min", 1995);
+            }
+            else{
+               var checkboxes = document.getElementsByClassName("filter_flavor");
+                  for(var i = 0; i < checkboxes.length; i++){
+                     checkboxes.item(i).disabled = false; // disable all checkboxes
+               }
+               var slider = document.getElementById("slider-range");
+               slider.setAttribute("min", 1971);
+            }
+            
+        };
 
         // Check house flavor
         function flavorCheckedOnClick(check){
@@ -200,19 +284,47 @@
             }
             flavor_filter = check.id;
             check.checked = true; // check the clicked checkbox
-            display_color(csvData);
-        }
-        
-        
-
-        
-
-
+            if(curr_selection == "us"){
+               display_color(csvData);
+            }
+            else{
+               statename = document.getElementById("displayName").innerText.split(": ")[1];
+               change_color(csvData, statename);
+               display_hist(csvData, statename);
+            }
+            if(check.id == "all-transactions"){
+               var checkboxes = document.getElementsByClassName("filter_type");
+                  for(var i = 0; i < checkboxes.length; i++){
+                     checkboxes.item(i).disabled = false; // disable all checkboxes
+               }
+            }
+            else{
+               var checkboxes = document.getElementsByClassName("filter_type");
+                  for(var i = 0; i < checkboxes.length; i++){
+                     checkboxes.item(i).disabled = true; // disable all checkboxes
+               }
+            }
+        };
+         // Adjust year slider to change scope
+         function show_value(value){
+            document.getElementById("slider_value").innerHTML = value;  
+            if(curr_selection == "us"){
+               display_color(csvData);
+            }
+            else{
+               statename = document.getElementById("displayName").innerText.split(": ")[1];
+               change_color(csvData, statename);
+            }
+            
+         };
     </script>
     <style>
     </style>
     <body>
         <div class = "container">
+         <div class="page-title">
+            <h1>United States House Price Index</h1>
+         </div>
             <div class = "row align-items-start">
                <div class = "col" id="left-col">
                   <div style="margin-top:2em;">
@@ -225,7 +337,7 @@
                         </div>
                      </div>
                   </div>
-                  <button class = "btn" id = "clearbtn">Clear</button>
+                  <button class = "btn" id = "clearbtn">Back</button>
                   <div>
                      <script>
                         loadMap("usMap");
@@ -237,7 +349,7 @@
                      <div class = "filter-title" style="margin-bottom:-15px">
                         <p>YEAR</p>
                      </div>
-                     <input type="range" class="form-range" min="1991" max="2022" step="1" value="2022" id="year-range" onchange=" year=this.value; show_value(this.value);">
+                     <input type="range" id = "slider-range" class="form-range" min="1975" max="2022" step="1" value="2022" id="year-range" onchange=" year=this.value; show_value(this.value);">
                      <div style="text-align:center;">
                         <span id="slider_value" style="color:black;font-weight: bolder;">2022</span>
                      </div>
