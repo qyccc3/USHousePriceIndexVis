@@ -57,36 +57,39 @@
         };
         // Read dataset CSV
         Promise.all([
-            d3.csv('datasets/states_cleaned_data.csv')
+            d3.csv('datasets/states_cleaned_data.csv'),
+            d3.csv('datasets/counties_cleaned_data.csv')
         ]).then(ready);
 
         // Assign all the values and create all the functions
         function ready(data){
+            states = data[0];
+            counties = data[1];
             curr_selection = "us";
             //Gloval Variables
             let allowhover = true;
             var statename; 
-            csvData = data;
-            display_color(data);
+            csvData = states;
+            display_color(states);
             // Mouse hover over state show status
             document.addEventListener('mouseover', function(event){
                 if(allowhover){
                     var target = event.target.parentElement;
                     if(target.id == "state"){
                         if(statename != undefined){
-                           change_color(data, statename);
+                           change_color(states, statename);
                         }
                         statename = target.getAttribute("state-name");
                         target.style.cssText += 'fill: #FFFAA0;';
                         document.getElementById('displayName').innerHTML = "<strong>States: </strong>" + statename;
-                        var result = data[0].filter(obj => {
+                        var result = states.filter(obj => {
                         return obj["state"] === statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
                         });
-                        display_hist(data, statename);
+                        display_hist(states, statename);
                         document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
                     }
                     else{
-                        display_color(data);
+                        display_color(states);
                         document.getElementById('displayName').innerHTML = "<strong>States: </strong>";
                         document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>";
                         document.getElementById('hisMax').innerHTML = "<strong>Max: </strong>";
@@ -100,12 +103,12 @@
                 var target = event.target.parentElement;
                 if(target.id == "state"){
                      statename = target.getAttribute("state-name");
-                     tonedown_color(data, statename);
+                     tonedown_color(states, statename);
                      //target.style.cssText += 'fill: #93C572;';
-                     var result = data[0].filter(obj => {
+                     var result = states.filter(obj => {
                            return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
                      });
-                     display_hist(data, statename);
+                     display_hist(states, statename);
                      document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
                      document.getElementById('displayName').innerHTML = "<strong>States: </strong>" + statename;
                      allowhover = false;
@@ -114,6 +117,25 @@
                      var animation = document.createElementNS("http://www.w3.org/2000/svg","animate");
                      svg.setAttribute("viewBox", target.getAttribute("view"));
                      curr_selection = "state";
+                     console.log(statename);
+                     var state_counties = counties.filter(obj => {
+                           return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+                     });
+                     console.log(state_counties);
+                     for(var county of state_counties){
+                        console.log(county["county"]);
+                        var county_path = document.querySelectorAll('[county-name="' + county["county"] + '"]');
+                        var bbox = county_path[0].getBBox();
+                        cx = bbox.x + bbox.width/2;
+                        cy = bbox.y + bbox.height/2;
+                        circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                        circle.setAttribute("cx", cx);
+                        circle.setAttribute("cy", cy);
+                        circle.setAttribute("r", 3);
+                        circle.setAttribute("fill", "yellow");
+                        svg.appendChild(circle);
+                        console.log(bbox);
+                     }
                 }
             }); 
             document.getElementById("clearbtn").onclick = function(){clear()};
@@ -132,12 +154,17 @@
                var svg = document.getElementById("us-map");
                svg.setAttribute("viewBox", "0 0 989.98 627.07");
                curr_selection = "us";
+
+               var circles = document.querySelectorAll("circle");
+               for (var i = 0; i < circles.length; i++){
+                     circles[i].remove();
+               }
             };
          };
        
          // Display color for each state
          function display_color(data){
-            var states = data[0].filter(state => {
+            var states = data.filter(state => {
                   return state["year"] == year && state["type"] == type_filter && state["index type"] == index_filter && state["flavor"] == flavor_filter;
                });
             var max = states.reduce(function(prev, curr){
@@ -164,7 +191,7 @@
          };
 
          function change_color(data, statename){
-            var states = data[0].filter(state => {
+            var states = data.filter(state => {
                return state["year"] == year && state["type"] == type_filter && state["index type"] == index_filter && state["flavor"] == flavor_filter;
             });
             var max = states.reduce(function(prev, curr){
@@ -184,7 +211,7 @@
             var green = 149 - (149 - 49) * ratio;
             var blue = 237 - (237 - 99) * ratio;
             var color = "rgb(" + red + "," + green + "," + blue + ")";
-            var result = data[0].filter(obj => {
+            var result = data.filter(obj => {
                   return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
             });
             document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
@@ -193,7 +220,7 @@
 
          // Tone down other state color
          function tonedown_color(data, statename){
-            var states = data[0].filter(state => {
+            var states = data.filter(state => {
                   return state["year"] == year && state["type"] == type_filter && state["index type"] == index_filter && state["flavor"] == flavor_filter;
                });
             var max = states.reduce(function(prev, curr){
@@ -223,17 +250,17 @@
 
         // Display historical max and min data
         function display_hist(data, name){
-            var states = data[0].filter(state => {
+            var states = data.filter(state => {
                   return state["state"] == name && state["type"] == type_filter && state["index type"] == index_filter && state["flavor"] == flavor_filter;;
-               });
-               var max = states.reduce(function(prev, curr){
-                  return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
-               });
-               var min = states.reduce(function(prev, curr){
-                  return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
-               });
-               document.getElementById('hisMin').innerHTML = "<strong>Min:</strong> " + min['index'] + " (" + min['year'] + ")";
-               document.getElementById('hisMax').innerHTML = "<strong>Max:</strong> " + max['index'] + " (" + max['year'] + ")";
+            });
+            var max = states.reduce(function(prev, curr){
+               return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+            });
+            var min = states.reduce(function(prev, curr){
+               return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+            });
+            document.getElementById('hisMin').innerHTML = "<strong>Min:</strong> " + min['index'] + " (" + min['year'] + ")";
+            document.getElementById('hisMax').innerHTML = "<strong>Max:</strong> " + max['index'] + " (" + max['year'] + ")";
         };
 
         // Check house type
@@ -317,6 +344,11 @@
             }
             
          };
+
+         function getCentroid(element){
+            var bbox = element.getBBox();
+            return [bbox.x + bbox.width/2, bbox.y + bbox.height/2];
+         }
     </script>
     <style>
     </style>
