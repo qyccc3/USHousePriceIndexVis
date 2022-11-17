@@ -1,11 +1,16 @@
-html, body {
+html, body, .container {
     background-color: white;
 }
+
 
 .page-title{
     margin-bottom: -40px;
     text-align: center;
     font-weight: light;
+}
+
+circle:hover{
+    fill: #ff0000;
 }
 
 svg g g{
@@ -63,9 +68,10 @@ svg g g:hover{
 }
 
 .stat-rect{
+    border-radius: 10px;
     height:40px;
-    width: 200px;
-    background-image: linear-gradient(to left,#DE3163, #6495ED);
+    width: 300px;
+    background-image: linear-gradient(to left,rgb(144,65,148), rgb(216,234,254));
     margin-bottom: 10px;
     display:flex;
 }

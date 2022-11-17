@@ -88,6 +88,10 @@
                         display_hist(states, statename);
                         document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
                     }
+                    else if(target.id == "county"){
+                        countyname = target.getAttribute("county-name");
+                        console.log(countyname);
+                    }
                     else{
                         display_color(states);
                         document.getElementById('displayName').innerHTML = "<strong>States: </strong>";
@@ -114,27 +118,56 @@
                      allowhover = false;
                      // Zoom in
                      var svg = document.getElementById("us-map");
-                     var animation = document.createElementNS("http://www.w3.org/2000/svg","animate");
+                     console.log(target.getAttribute("view"));
                      svg.setAttribute("viewBox", target.getAttribute("view"));
                      curr_selection = "state";
-                     console.log(statename);
+
                      var state_counties = counties.filter(obj => {
                            return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
                      });
-                     console.log(state_counties);
+                     var sum_index = 0;
+                     for(var i = 0; i < state_counties.length; i++){
+                        sum_index += parseFloat(state_counties[i]["index"]);
+                     }
+                     var avg_index = sum_index / state_counties.length;
+                     console.log(avg_index);
+                     var circles = document.querySelectorAll("circle");
+                     for (var i = 0; i < circles.length; i++){
+                           circles[i].remove();
+                     }
+
+                     var max = state_counties.reduce(function(prev, curr){
+                        return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+                     });
+                     var min = state_counties.reduce(function(prev, curr){
+                        return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+                     });
                      for(var county of state_counties){
-                        console.log(county["county"]);
                         var county_path = document.querySelectorAll('[county-name="' + county["county"] + '"]');
                         var bbox = county_path[0].getBBox();
                         cx = bbox.x + bbox.width/2;
                         cy = bbox.y + bbox.height/2;
                         circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                        // Max Radius = 8
+                        radius = 8 * (county["index"] / max["index"]);
                         circle.setAttribute("cx", cx);
                         circle.setAttribute("cy", cy);
-                        circle.setAttribute("r", 3);
-                        circle.setAttribute("fill", "yellow");
+                        circle.setAttribute("r", radius);
+                        if (county["county"] == max["county"]){
+                           circle.setAttribute('fill', '#DE3163');
+                        }
+                        else if (county["county"] == min["county"]){
+                           circle.setAttribute('fill', '#6495ED');
+                        }
+                        else{
+                           circle.setAttribute('fill', '#FFFAA0');
+                        }
+                        circle.setAttribute("stroke", "black");
+                        circle.setAttribute("index", county["index"]);
+                        circle.setAttribute("onmouseover", "county_stats(this)");
+                        circle.setAttribute("county-name", county_path[0].getAttribute("county-name"));
                         svg.appendChild(circle);
-                        console.log(bbox);
+
                      }
                 }
             }); 
@@ -161,6 +194,10 @@
                }
             };
          };
+
+         function county_stats(data){
+            console.log(data);
+         }
        
          // Display color for each state
          function display_color(data){
@@ -173,18 +210,20 @@
             var min = states.reduce(function(prev, curr){
                return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
             });
+            console.log(min);
             var range = max["index"] - min["index"];
             document.getElementById('min-value-p').innerHTML = min['index'];
             document.getElementById('max-value-p').innerHTML = max['index'];
             for(var i = 0; i < states.length; i++){
                var ratio = (states[i]["index"] - min["index"]) / range;
                // Predefined RGB color scale
-               // Red = 222 - 100
-               // Green = 149 - 49
-               // Blue = 237 - 99
-               var red = 100 + (222 - 100) * ratio;
-               var green = 149 - (149 - 49) * ratio;
-               var blue = 237 - (237 - 99) * ratio;
+               // Min : 144 65 148
+               // Max : 216 234 254
+               
+               var red = 144 + (216 - 144) * ratio;
+               var green = 65 - (234 - 65) * ratio;
+               var blue = 254 - (254 - 148) * ratio;
+
                var color = "rgb(" + red + "," + green + "," + blue + ")";
                document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: ' + color + ';';
             }
@@ -207,9 +246,11 @@
             document.getElementById('min-value-p').innerHTML = min['index'];
             document.getElementById('max-value-p').innerHTML = max['index'];
             var ratio = (state[0]["index"] - min["index"]) / range;
-            var red = 100 + (222 - 100) * ratio;
-            var green = 149 - (149 - 49) * ratio;
-            var blue = 237 - (237 - 99) * ratio;
+            
+            var red = 144 + (216 - 144) * ratio;
+            var green = 65 - (234 - 65) * ratio;
+            var blue = 254 - (254 - 148) * ratio;
+
             var color = "rgb(" + red + "," + green + "," + blue + ")";
             var result = data.filter(obj => {
                   return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
@@ -234,13 +275,13 @@
             var range = max["index"] - min["index"];
             for(var i = 0; i < states.length; i++){
                if(states[i]["state"] != statename){
-                  document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: #ECFFDC';
+                  document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: #EBEDEF';
                }
                else{
                   var ratio = (states[i]["index"] - min["index"]) / range;
-                  var red = 100 + (222 - 100) * ratio;
-                  var green = 149 - (149 - 49) * ratio;
-                  var blue = 237 - (237 - 99) * ratio;
+                  var red = 144 + (216 - 144) * ratio;
+                  var green = 65 - (234 - 65) * ratio;
+                  var blue = 254 - (254 - 148) * ratio;
                   var color = "rgb(" + red + "," + green + "," + blue + ")";
                   document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: ' + color + ';';
                }
@@ -369,7 +410,7 @@
                         </div>
                      </div>
                   </div>
-                  <button class = "btn" id = "clearbtn">Back</button>
+                  <button class = "btn" id = "clearbtn" style="border-radius:10px;">Back</button>
                   <div>
                      <script>
                         loadMap("usMap");
