@@ -90,7 +90,7 @@
                     }
                     else if(target.id == "county"){
                         countyname = target.getAttribute("county-name");
-                        console.log(countyname);
+                        //console.log(countyname);
                     }
                     else{
                         display_color(states);
@@ -118,7 +118,7 @@
                      allowhover = false;
                      // Zoom in
                      var svg = document.getElementById("us-map");
-                     console.log(target.getAttribute("view"));
+                     var statearea = target.getBBox().width *  target.getBBox().height;
                      svg.setAttribute("viewBox", target.getAttribute("view"));
                      curr_selection = "state";
 
@@ -130,7 +130,7 @@
                         sum_index += parseFloat(state_counties[i]["index"]);
                      }
                      var avg_index = sum_index / state_counties.length;
-                     console.log(avg_index);
+                     //console.log(avg_index);
                      var circles = document.querySelectorAll("circle");
                      for (var i = 0; i < circles.length; i++){
                            circles[i].remove();
@@ -196,7 +196,7 @@
          };
 
          function county_stats(data){
-            console.log(data);
+            //console.log(data);
          }
        
          // Display color for each state
@@ -210,19 +210,37 @@
             var min = states.reduce(function(prev, curr){
                return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
             });
-            console.log(min);
-            var range = max["index"] - min["index"];
+
+            var sum = 0;
+            for(var i = 0; i < states.length; i++){
+               sum += parseFloat(states[i]["index"]);
+            }
+            var avg = sum / states.length;
             document.getElementById('min-value-p').innerHTML = min['index'];
             document.getElementById('max-value-p').innerHTML = max['index'];
             for(var i = 0; i < states.length; i++){
-               var ratio = (states[i]["index"] - min["index"]) / range;
-               // Predefined RGB color scale
-               // Min : 144 65 148
-               // Max : 216 234 254
+               if (states[i]["index"] < avg){
+                  var range = avg - min["index"];
+                  var ratio = (avg - states[i]["index"]) / range;
+                  var red = 182 + (218 - 182) * ratio;
+                  var green = 149 + (233 - 149) * ratio;
+                  var blue = 201 + (254 - 201) * ratio;
+               }
+               else{
+                  var range = max["index"] - avg;
+                  var ratio = (states[i]["index"] - avg) / range;
+                  var red = 182 - (182 - 145) * ratio;
+                  var green = 149 - (149 - 65) * ratio;
+                  var blue = 201 - (201 - 148) * ratio;
+               }
+               // var ratio = (states[i]["index"] - min["index"]) / range;
+               // // Predefined RGB color scale
+               // // Min : 144 65 148
+               // // Max : 216 234 254
                
-               var red = 144 + (216 - 144) * ratio;
-               var green = 65 - (234 - 65) * ratio;
-               var blue = 254 - (254 - 148) * ratio;
+               // var red = 144 + (216 - 144) * ratio;
+               // var green = 65 - (234 - 65) * ratio;
+               // var blue = 254 - (254 - 148) * ratio;
 
                var color = "rgb(" + red + "," + green + "," + blue + ")";
                document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: ' + color + ';';
@@ -239,17 +257,31 @@
             var min = states.reduce(function(prev, curr){
                return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
             });
-            var range = max["index"] - min["index"];
+            var sum = 0;
+            for(var i = 0; i < states.length; i++){
+               sum += parseFloat(states[i]["index"]);
+            }
+            var avg = sum / states.length;
             var state = states.filter(state => {
                return state["state"] == statename;
             });
             document.getElementById('min-value-p').innerHTML = min['index'];
             document.getElementById('max-value-p').innerHTML = max['index'];
-            var ratio = (state[0]["index"] - min["index"]) / range;
-            
-            var red = 144 + (216 - 144) * ratio;
-            var green = 65 - (234 - 65) * ratio;
-            var blue = 254 - (254 - 148) * ratio;
+
+            if (state[0]["index"] < avg){
+                  var range = avg - min["index"];
+                  var ratio = (avg - state[0]["index"]) / range;
+                  var red = 182 + (218 - 182) * ratio;
+                  var green = 149 + (233 - 149) * ratio;
+                  var blue = 201 + (254 - 201) * ratio;
+               }
+               else{
+                  var range = max["index"] - avg;
+                  var ratio = (state[0]["index"] - avg) / range;
+                  var red = 182 - (182 - 145) * ratio;
+                  var green = 149 - (149 - 65) * ratio;
+                  var blue = 201 - (201 - 148) * ratio;
+               }
 
             var color = "rgb(" + red + "," + green + "," + blue + ")";
             var result = data.filter(obj => {
@@ -272,16 +304,30 @@
             });
             document.getElementById('min-value-p').innerHTML = min['index'];
             document.getElementById('max-value-p').innerHTML = max['index'];
-            var range = max["index"] - min["index"];
+            var sum = 0;
+            for(var i = 0; i < states.length; i++){
+               sum += parseFloat(states[i]["index"]);
+            }
+            var avg = sum / states.length;
             for(var i = 0; i < states.length; i++){
                if(states[i]["state"] != statename){
-                  document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: #EBEDEF';
+                  document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill:	#F8F8F8;';
                }
                else{
-                  var ratio = (states[i]["index"] - min["index"]) / range;
-                  var red = 144 + (216 - 144) * ratio;
-                  var green = 65 - (234 - 65) * ratio;
-                  var blue = 254 - (254 - 148) * ratio;
+                  if (states[i]["index"] < avg){
+                     var range = avg - min["index"];
+                     var ratio = (avg - states[i]["index"]) / range;
+                     var red = 182 + (218 - 182) * ratio;
+                     var green = 149 + (233 - 149) * ratio;
+                     var blue = 201 + (254 - 201) * ratio;
+                  }
+                  else{
+                     var range = max["index"] - avg;
+                     var ratio = (states[i]["index"] - avg) / range;
+                     var red = 182 - (182 - 145) * ratio;
+                     var green = 149 - (149 - 65) * ratio;
+                     var blue = 201 - (201 - 148) * ratio;
+                  }
                   var color = "rgb(" + red + "," + green + "," + blue + ")";
                   document.querySelector('[state-name="' + states[i]["state"] + '"]').style.cssText += 'fill: ' + color + ';';
                }
@@ -457,6 +503,12 @@
                         <div id="currentIdx"><strong>Current:</strong></div>
                         <div id="hisMax"><strong>Max:</strong></div>
                         <div id="hisMin"><strong>Min:</strong></div>
+                     </div>
+                  </div>
+
+                  <div class="display">
+                     <div id="histogram">
+                        <svg id="histogram-svg" width="100%" height="100%"></svg>
                      </div>
                   </div>
                </div>

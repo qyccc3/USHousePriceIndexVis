@@ -68,26 +68,29 @@ svg g g:hover{
 }
 
 .stat-rect{
-    border-radius: 10px;
-    height:40px;
+    height:20px;
     width: 300px;
-    background-image: linear-gradient(to left,rgb(144,65,148), rgb(216,234,254));
+    background-image: linear-gradient(to right, #dae9fe 0%, #b695c9 100%);
     margin-bottom: 10px;
     display:flex;
+    border: #00394f 1.5px solid;
 }
 
 .min-value{
-    margin-top: 8px;
-    margin-left: 10px;
-    color: white;
+    font-size: large;
+    margin-top: -25px;
+    margin-left: 0px;
+    -webkit-text-fill-color:black; /* Will override color (regardless of order) */
     font-weight: bolder;
 }
 
 .max-value{
-    margin-top: 8px;
+    margin-top: -25px;
+    font-size: large;
     margin-left: auto;
-    margin-right: 10px;
-    color:white;
+    margin-right: 0px;
+    -webkit-text-fill-color: black; /* Will override color (regardless of order) */
+    
     font-weight: bolder;
 }
 
