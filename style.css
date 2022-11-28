@@ -59,6 +59,19 @@ svg g g:hover{
     margin-top: 20px;
 }
 
+.histo{
+    border: #00394f 1px solid;
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 5px;
+    padding-top: 10px;
+    margin-right: 5px;
+    margin-left: 5px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    margin-top: 20px;
+}
+
 .filter-value{
     display:flex;
     align-content: center;

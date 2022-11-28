@@ -87,6 +87,11 @@
                         });
                         display_hist(states, statename);
                         document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
+                        histo = document.getElementById('histogram-img');
+                        img_name = 'Prediction Figures' + '/' + statename + '_' + type_filter + '_' + flavor_filter + '.png';
+                        histo.src = img_name;
+
+                        console.log(img_name);
                     }
                     else if(target.id == "county"){
                         countyname = target.getAttribute("county-name");
@@ -385,7 +390,7 @@
                      checkboxes.item(i).disabled = false; // disable all checkboxes
                }
                var slider = document.getElementById("slider-range");
-               slider.setAttribute("min", 1971);
+               slider.setAttribute("min", 1975);
             }
             
         };
@@ -506,9 +511,9 @@
                      </div>
                   </div>
 
-                  <div class="display">
+                  <div class="histo">
                      <div id="histogram">
-                        <svg id="histogram-svg" width="100%" height="100%"></svg>
+                        <img id="histogram-img" src="./Prediction Figures/main.jpeg" style="width: 100%;height:100%;">
                      </div>
                   </div>
                </div>
