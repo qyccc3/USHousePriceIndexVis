@@ -3,6 +3,7 @@
 <head>
     <meta charset = "UTF-8">
     <title>United States House Price Index Map</title>
+    <link rel="icon" href="favicon.ico">
     <link rel="stylesheet" href="style.css" type="text/css">
     <!-- Bootstrap, D3, ajax -->  
     <script src="https://d3js.org/d3.v6.min.js"></script>
@@ -18,6 +19,12 @@
          var index_filter = "index_nsa";
          var flavor_filter = "all-transactions";
          var curr_selection;
+
+         var prev_circle_idx = -1;
+         var prev_color = 0;
+
+         var countySelected = false;
+
         // Load JSON into SVG
         function loadMap(mapName){
             $.getJSON('json/' + mapName + '.json', function(data){
@@ -52,7 +59,11 @@
                 border.appendChild(border_path);
                 svg.appendChild(g);
                 svg.appendChild(border);
-                col.appendChild(svg);
+
+                // create a rectangle
+               const rect = document.createElementNS("http://www.w3.org/2000/svg","rect");
+
+               col.appendChild(svg);
             });
         };
         // Read dataset CSV
@@ -86,12 +97,10 @@
                         return obj["state"] === statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
                         });
                         display_hist(states, statename);
-                        document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
+                        document.getElementById('currentIdx').innerHTML = "<strong>State Current: </strong>" + result[0]["index"];
                         histo = document.getElementById('histogram-img');
                         img_name = 'Prediction Figures' + '/' + statename + '_' + type_filter + '_' + flavor_filter + '.png';
                         histo.src = img_name;
-
-                        console.log(img_name);
                     }
                     else if(target.id == "county"){
                         countyname = target.getAttribute("county-name");
@@ -100,9 +109,11 @@
                     else{
                         display_color(states);
                         document.getElementById('displayName').innerHTML = "<strong>States: </strong>";
-                        document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>";
+                        document.getElementById('currentIdx').innerHTML = "<strong>State Current: </strong>";
                         document.getElementById('hisMax').innerHTML = "<strong>Max: </strong>";
                         document.getElementById('hisMin').innerHTML = "<strong>Min: </strong>";
+                        histo = document.getElementById('histogram-img');
+                        histo.src = "./Prediction Figures/main.jpeg";
                     }
                 }
             });
@@ -118,18 +129,44 @@
                            return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
                      });
                      display_hist(states, statename);
-                     document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
+                     document.getElementById('currentIdx').innerHTML = "<strong>State Current: </strong>" + result[0]["index"];
                      document.getElementById('displayName').innerHTML = "<strong>States: </strong>" + statename;
                      allowhover = false;
                      // Zoom in
                      var svg = document.getElementById("us-map");
                      var statearea = target.getBBox().width *  target.getBBox().height;
                      svg.setAttribute("viewBox", target.getAttribute("view"));
-                     curr_selection = "state";
+                     //console.log(target.getAttribute("view").split(" "));
 
+                     curr_selection = "state";
+                     countySelected = false;
+                     prev_circle_idx = -1;
+                     prev_color = 0;
                      var state_counties = counties.filter(obj => {
                            return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
                      });
+
+                     console.log(state_counties);
+                     histo = document.getElementById('histogram-img');
+                     img_name = 'Prediction Figures' + '/' + statename + '_' + type_filter + '_' + flavor_filter + '.png';
+                     histo.src = img_name;
+                     var dropdown = document.getElementById("dropdown-menu-list");
+                     while(dropdown.firstChild){
+                        dropdown.removeChild(dropdown.firstChild);
+                     }
+                     display_dropdown(state_counties);
+
+                     //delete counties with 0 index
+                     var new_state_counties = [];
+                     for(var i = 0; i < state_counties.length; i++){
+                        if(state_counties[i]["index"] != 0){
+                            new_state_counties.push(state_counties[i]);
+                        }
+                     }
+                     state_counties = new_state_counties;
+                     
+                     document.getElementById('county-currentIdx').innerHTML = "<strong>County Current: </strong>";
+                     document.getElementById('county-name').innerHTML = "<strong>County: </strong>";
                      var sum_index = 0;
                      for(var i = 0; i < state_counties.length; i++){
                         sum_index += parseFloat(state_counties[i]["index"]);
@@ -140,7 +177,6 @@
                      for (var i = 0; i < circles.length; i++){
                            circles[i].remove();
                      }
-
                      var max = state_counties.reduce(function(prev, curr){
                         return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
                      });
@@ -153,8 +189,8 @@
                         cx = bbox.x + bbox.width/2;
                         cy = bbox.y + bbox.height/2;
                         circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
-                        // Max Radius = 8
-                        radius = 8 * (county["index"] / max["index"]);
+                        // Max Radius = 6
+                        radius = 6 * (county["index"] / max["index"]);
                         circle.setAttribute("cx", cx);
                         circle.setAttribute("cy", cy);
                         circle.setAttribute("r", radius);
@@ -169,24 +205,31 @@
                         }
                         circle.setAttribute("stroke", "black");
                         circle.setAttribute("index", county["index"]);
-                        circle.setAttribute("onmouseover", "county_stats(this)");
+                        circle.setAttribute("onmouseover", "display_county_stats(this)");
+                        // set circle attribute onclick
+                        circle.setAttribute("onclick", "show_county_stats(this)");
+                        
                         circle.setAttribute("county-name", county_path[0].getAttribute("county-name"));
                         svg.appendChild(circle);
-
                      }
                 }
             }); 
             document.getElementById("clearbtn").onclick = function(){clear()};
             function clear(){
+               countySelected = false;
+               prev_circle_idx = -1;
+               prev_color = 0;
                var states = document.querySelectorAll("[id^='state']");
                for (var i = 0; i < states.length; i++){
                      states[i].style.fill = "";
                }
                allowhover = true;
                document.getElementById('displayName').innerHTML = "<strong>States: </strong>";
-               document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>";
+               document.getElementById('currentIdx').innerHTML = "<strong>State Current: </strong>";
                document.getElementById('hisMax').innerHTML = "<strong>Max: </strong>";
                document.getElementById('hisMin').innerHTML = "<strong>Min: </strong>";
+               document.getElementById('county-currentIdx').innerHTML = "<strong>County Current: </strong>";
+               document.getElementById('county-name').innerHTML = "<strong>County: </strong>";
 
                display_color(csvData);
                var svg = document.getElementById("us-map");
@@ -197,11 +240,192 @@
                for (var i = 0; i < circles.length; i++){
                      circles[i].remove();
                }
+
+               var dropdown = document.getElementById("dropdown-menu-list");
+               while(dropdown.firstChild){
+                  dropdown.removeChild(dropdown.firstChild);
+               }
             };
          };
 
-         function county_stats(data){
+         function display_dropdown(data){
+            var dropdown = document.getElementById("dropdown-menu-list");
+            // sort data on index value from max to min
+            data.sort(function(a, b){
+               return parseFloat(b["index"]) - parseFloat(a["index"]);
+            });
             //console.log(data);
+            for(var i = 0; i < data.length; i++){
+               var option = document.createElement("li");
+               var a = document.createElement("a");
+               a.setAttribute("href", "#");
+               a.setAttribute("class", "dropdown-item");
+               a.setAttribute("county", data[i]["county"]);
+               a.onclick = function(){
+                  countySelected = true;
+                  var countyname = this.getAttribute("county");
+                  var result = counties.filter(obj =>{
+                     return obj["county"] == countyname && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+                  })
+                  // select all circles
+                  var circles = document.querySelectorAll("circle");
+                  if(prev_circle_idx != -1){
+                     circles[prev_circle_idx].setAttribute("fill", prev_color);
+                  }
+                  prev_circle = countyname;
+                  for (var i = 0; i < circles.length; i++){
+                        if (circles[i].getAttribute("county-name") == countyname){
+                           prev_color = circles[i].getAttribute("fill");
+                           circles[i].setAttribute("fill", "green");
+                           prev_circle_idx = i;
+                        }
+                  }
+                  document.getElementById('county-currentIdx').innerHTML = "<strong>County Current: </strong>" + result[0]["index"];
+                  document.getElementById('county-name').innerHTML = "<strong>County: </strong>" + countyname;
+               };
+               a.innerText = data[i]["county"].split(",")[0] + " (" + data[i]["index"] + ")";
+               if(data[i]["index"] != 0){
+                  option.appendChild(a);
+                  dropdown.appendChild(option);
+               }
+            }
+         };
+
+         function flavorCheckedOnClick(check){
+            var checkboxes = document.getElementsByClassName("filter_flavor");
+            for(var i = 0; i < checkboxes.length; i++){
+               checkboxes.item(i).checked = false; // uncheck all checkboxes
+            }
+            flavor_filter = check.id;
+            check.checked = true; // check the clicked checkbox
+            if(curr_selection == "us"){
+               display_color(csvData);
+            }
+            else{
+               statename = document.getElementById("displayName").innerText.split(": ")[1];
+               change_color(csvData, statename);
+               display_hist(csvData, statename);
+               histo = document.getElementById('histogram-img');
+               img_name = 'Prediction Figures' + '/' + statename + '_' + type_filter + '_' + flavor_filter + '.png';
+               histo.src = img_name;
+               var state_counties = counties.filter(obj => {
+                           return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+                     });
+               var new_state_counties = [];
+               for(var i = 0; i < state_counties.length; i++){
+                  if(state_counties[i]["index"] != 0){
+                        new_state_counties.push(state_counties[i]);
+                  }
+               }
+               var dropdown = document.getElementById("dropdown-menu-list");
+               while(dropdown.firstChild){
+                  dropdown.removeChild(dropdown.firstChild);
+               }
+               state_counties = new_state_counties;
+               display_dropdown(state_counties);
+               var sum_index = 0;
+               for(var i = 0; i < state_counties.length; i++){
+                  sum_index += parseFloat(state_counties[i]["index"]);
+               }
+               var avg_index = sum_index / state_counties.length;
+               //console.log(avg_index);
+               var circles = document.querySelectorAll("circle");
+               for (var i = 0; i < circles.length; i++){
+                     circles[i].remove();
+               }
+               if(state_counties.length > 0){
+                  var max = state_counties.reduce(function(prev, curr){
+                  return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+               });
+               var min = state_counties.reduce(function(prev, curr){
+                  return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+               });
+               var svg = document.getElementById("us-map");
+               for(var county of state_counties){
+                  var county_path = document.querySelectorAll('[county-name="' + county["county"] + '"]');
+                  var bbox = county_path[0].getBBox();
+                  cx = bbox.x + bbox.width/2;
+                  cy = bbox.y + bbox.height/2;
+                  circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                  // Max Radius = 6
+                  radius = 6 * (county["index"] / max["index"]);
+                  circle.setAttribute("cx", cx);
+                  circle.setAttribute("cy", cy);
+                  circle.setAttribute("r", radius);
+                  if (county["county"] == max["county"]){
+                     circle.setAttribute('fill', '#DE3163');
+                  }
+                  else if (county["county"] == min["county"]){
+                     circle.setAttribute('fill', '#6495ED');
+                  }
+                  else{
+                     circle.setAttribute('fill', '#FFFAA0');
+                  }
+                  circle.setAttribute("stroke", "black");
+                  circle.setAttribute("index", county["index"]);
+                  circle.setAttribute("onmouseover", "display_county_stats(this)");
+                  // set circle attribute onclick
+                  circle.setAttribute("onclick", "show_county_stats(this)");
+                  
+                  circle.setAttribute("county-name", county_path[0].getAttribute("county-name"));
+                  svg.appendChild(circle);
+               }
+               }
+            }
+            if(check.id == "all-transactions"){
+               var checkboxes = document.getElementsByClassName("filter_type");
+                  for(var i = 0; i < checkboxes.length; i++){
+                     checkboxes.item(i).disabled = false; // disable all checkboxes
+               }
+               var slider = document.getElementById("slider-range");
+               slider.setAttribute("min", 1975);
+            }
+            else{
+               var checkboxes = document.getElementsByClassName("filter_type");
+                  for(var i = 0; i < checkboxes.length; i++){
+                     checkboxes.item(i).disabled = true; // disable all checkboxes
+
+               }
+               var slider = document.getElementById("slider-range");
+               if(slider.value < 1995){
+                  year = 1995;
+                  slider.setAttribute("value", 1995);
+                  show_value(year);
+               }
+               slider.setAttribute("min", 1995);
+            }
+        }; 
+         function display_county_stats(data){
+            if(!countySelected){
+               var countyname = data.getAttribute("county-name");
+               var result = counties.filter(obj =>{
+                  return obj["county"] == countyname && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+               })
+               document.getElementById('county-currentIdx').innerHTML = "<strong>County Current: </strong>" + result[0]["index"];
+               document.getElementById('county-name').innerHTML = "<strong>County: </strong>" + countyname;
+            }
+         }
+
+         function show_county_stats(data){
+            countySelected = true;
+            var countyname = data.getAttribute("county-name");
+            var result = counties.filter(obj =>{
+               return obj["county"] == countyname && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+            })
+            document.getElementById('county-currentIdx').innerHTML = "<strong>County Current: </strong>" + result[0]["index"];
+            document.getElementById('county-name').innerHTML = "<strong>County: </strong>" + countyname;
+            var circles = document.querySelectorAll("circle");
+            if(prev_circle_idx != -1){
+               circles[prev_circle_idx].setAttribute("fill", prev_color);
+            }
+            prev_circle = countyname;
+            for (var i = 0; i < circles.length; i++){
+                  if (circles[i].getAttribute("county-name") == countyname){
+                     prev_color = circles[i].getAttribute("fill");
+                     circles[i].setAttribute("fill", "green");
+                     prev_circle_idx = i;
+                  }
+            }
          }
        
          // Display color for each state
@@ -292,7 +516,7 @@
             var result = data.filter(obj => {
                   return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["index type"] == index_filter && obj["flavor"] == flavor_filter;
             });
-            document.getElementById('currentIdx').innerHTML = "<strong>Current: </strong>" + result[0]["index"];
+            document.getElementById('currentIdx').innerHTML = "<strong>State Current: </strong>" + result[0]["index"];
             document.querySelector('[state-name="' + statename + '"]').style.cssText += 'fill: ' + color + ';';
          }
 
@@ -370,6 +594,73 @@
                statename = document.getElementById("displayName").innerText.split(": ")[1];
                change_color(csvData, statename);
                display_hist(csvData, statename);
+               histo = document.getElementById('histogram-img');
+               img_name = 'Prediction Figures' + '/' + statename + '_' + type_filter + '_' + flavor_filter + '.png';
+               histo.src = img_name;
+               var state_counties = counties.filter(obj => {
+                           return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+                     });
+
+               var new_state_counties = [];
+               for(var i = 0; i < state_counties.length; i++){
+                  if(state_counties[i]["index"] != 0){
+                        new_state_counties.push(state_counties[i]);
+                  }
+               }
+               var dropdown = document.getElementById("dropdown-menu-list");
+               while(dropdown.firstChild){
+                  dropdown.removeChild(dropdown.firstChild);
+               }
+               state_counties = new_state_counties;
+               display_dropdown(state_counties);
+               var sum_index = 0;
+               for(var i = 0; i < state_counties.length; i++){
+                  sum_index += parseFloat(state_counties[i]["index"]);
+               }
+               var avg_index = sum_index / state_counties.length;
+               //console.log(avg_index);
+               var circles = document.querySelectorAll("circle");
+               for (var i = 0; i < circles.length; i++){
+                     circles[i].remove();
+               }
+               if(state_counties.length > 0){
+                  var max = state_counties.reduce(function(prev, curr){
+                  return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+               });
+               var min = state_counties.reduce(function(prev, curr){
+                  return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+               });
+               var svg = document.getElementById("us-map");
+               for(var county of state_counties){
+                  var county_path = document.querySelectorAll('[county-name="' + county["county"] + '"]');
+                  var bbox = county_path[0].getBBox();
+                  cx = bbox.x + bbox.width/2;
+                  cy = bbox.y + bbox.height/2;
+                  circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                  // Max Radius = 6
+                  radius = 6 * (county["index"] / max["index"]);
+                  circle.setAttribute("cx", cx);
+                  circle.setAttribute("cy", cy);
+                  circle.setAttribute("r", radius);
+                  if (county["county"] == max["county"]){
+                     circle.setAttribute('fill', '#DE3163');
+                  }
+                  else if (county["county"] == min["county"]){
+                     circle.setAttribute('fill', '#6495ED');
+                  }
+                  else{
+                     circle.setAttribute('fill', '#FFFAA0');
+                  }
+                  circle.setAttribute("stroke", "black");
+                  circle.setAttribute("index", county["index"]);
+                  circle.setAttribute("onmouseover", "display_county_stats(this)");
+                  // set circle attribute onclick
+                  circle.setAttribute("onclick", "show_county_stats(this)");
+                  
+                  circle.setAttribute("county-name", county_path[0].getAttribute("county-name"));
+                  svg.appendChild(circle);
+               }
+               }
             }
             if (check.id == "non-metro"){
                var checkboxes = document.getElementsByClassName("filter_flavor");
@@ -392,38 +683,11 @@
                var slider = document.getElementById("slider-range");
                slider.setAttribute("min", 1975);
             }
+
             
         };
 
         // Check house flavor
-        function flavorCheckedOnClick(check){
-            var checkboxes = document.getElementsByClassName("filter_flavor");
-            for(var i = 0; i < checkboxes.length; i++){
-               checkboxes.item(i).checked = false; // uncheck all checkboxes
-            }
-            flavor_filter = check.id;
-            check.checked = true; // check the clicked checkbox
-            if(curr_selection == "us"){
-               display_color(csvData);
-            }
-            else{
-               statename = document.getElementById("displayName").innerText.split(": ")[1];
-               change_color(csvData, statename);
-               display_hist(csvData, statename);
-            }
-            if(check.id == "all-transactions"){
-               var checkboxes = document.getElementsByClassName("filter_type");
-                  for(var i = 0; i < checkboxes.length; i++){
-                     checkboxes.item(i).disabled = false; // disable all checkboxes
-               }
-            }
-            else{
-               var checkboxes = document.getElementsByClassName("filter_type");
-                  for(var i = 0; i < checkboxes.length; i++){
-                     checkboxes.item(i).disabled = true; // disable all checkboxes
-               }
-            }
-        };
          // Adjust year slider to change scope
          function show_value(value){
             document.getElementById("slider_value").innerHTML = value;  
@@ -433,6 +697,70 @@
             else{
                statename = document.getElementById("displayName").innerText.split(": ")[1];
                change_color(csvData, statename);
+               var state_counties = counties.filter(obj => {
+                           return obj["state"] == statename && obj["year"] == year && obj["type"] == type_filter && obj["flavor"] == flavor_filter;
+                     });
+
+               var new_state_counties = [];
+               for(var i = 0; i < state_counties.length; i++){
+                  if(state_counties[i]["index"] != 0){
+                        new_state_counties.push(state_counties[i]);
+                  }
+               }
+               var dropdown = document.getElementById("dropdown-menu-list");
+               while(dropdown.firstChild){
+                  dropdown.removeChild(dropdown.firstChild);
+               }
+               state_counties = new_state_counties;
+               display_dropdown(state_counties);
+               var sum_index = 0;
+               for(var i = 0; i < state_counties.length; i++){
+                  sum_index += parseFloat(state_counties[i]["index"]);
+               }
+               var avg_index = sum_index / state_counties.length;
+               //console.log(avg_index);
+               var circles = document.querySelectorAll("circle");
+               for (var i = 0; i < circles.length; i++){
+                     circles[i].remove();
+               }
+               if(state_counties.length > 0){
+                  var max = state_counties.reduce(function(prev, curr){
+                  return parseInt(prev["index"]) > parseInt(curr["index"]) ? prev : curr;
+               });
+               var min = state_counties.reduce(function(prev, curr){
+                  return parseInt(prev["index"]) < parseInt(curr["index"]) ? prev : curr;
+               });
+               var svg = document.getElementById("us-map");
+               for(var county of state_counties){
+                  var county_path = document.querySelectorAll('[county-name="' + county["county"] + '"]');
+                  var bbox = county_path[0].getBBox();
+                  cx = bbox.x + bbox.width/2;
+                  cy = bbox.y + bbox.height/2;
+                  circle = document.createElementNS("http://www.w3.org/2000/svg","circle");
+                  // Max Radius = 6
+                  radius = 6 * (county["index"] / max["index"]);
+                  circle.setAttribute("cx", cx);
+                  circle.setAttribute("cy", cy);
+                  circle.setAttribute("r", radius);
+                  if (county["county"] == max["county"]){
+                     circle.setAttribute('fill', '#DE3163');
+                  }
+                  else if (county["county"] == min["county"]){
+                     circle.setAttribute('fill', '#6495ED');
+                  }
+                  else{
+                     circle.setAttribute('fill', '#FFFAA0');
+                  }
+                  circle.setAttribute("stroke", "black");
+                  circle.setAttribute("index", county["index"]);
+                  circle.setAttribute("onmouseover", "display_county_stats(this)");
+                  // set circle attribute onclick
+                  circle.setAttribute("onclick", "show_county_stats(this)");
+                  
+                  circle.setAttribute("county-name", county_path[0].getAttribute("county-name"));
+                  svg.appendChild(circle);
+               }
+               }
             }
             
          };
@@ -445,9 +773,9 @@
     <style>
     </style>
     <body>
-        <div class = "container">
+        <div class = "container-xxl">
          <div class="page-title">
-            <h1>United States House Price Index</h1>
+            <h1>United States House Price Index <a class= "btn" style="background:white !important; border:white; width: 40px;" title="House price index measures average price changes in repeat sales or refinancings on the same properties"><img src="about.jpg" style="height:100%;width:100%;"></a></h1>
          </div>
             <div class = "row align-items-start">
                <div class = "col" id="left-col">
@@ -462,6 +790,13 @@
                      </div>
                   </div>
                   <button class = "btn" id = "clearbtn" style="border-radius:10px;">Back</button>
+                  <div class="dropdown" style="display:inline;">
+                     <button class="btn btn-secondary dropdown-toggle" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius:10px;">
+                        Available Counties
+                      </button>
+                      <ul class="dropdown-menu" id="dropdown-menu-list">
+                      </ul>
+                  </div>
                   <div>
                      <script>
                         loadMap("usMap");
@@ -505,9 +840,15 @@
                         <strong>States: </strong>
                      </div>
                      <div class = "index">
-                        <div id="currentIdx"><strong>Current:</strong></div>
+                        <div id="currentIdx"><strong>State Current:</strong></div>
                         <div id="hisMax"><strong>Max:</strong></div>
                         <div id="hisMin"><strong>Min:</strong></div>
+                     </div>
+                     <div id="county-name">
+                        <strong>County: </strong>
+                     </div>
+                     <div class = "index">
+                        <div id ="county-currentIdx"><Strong>County Current: </Strong></div>
                      </div>
                   </div>
 

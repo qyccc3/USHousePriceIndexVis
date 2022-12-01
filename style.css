@@ -1,8 +1,6 @@
 html, body, .container {
     background-color: white;
 }
-
-
 .page-title{
     margin-bottom: -40px;
     text-align: center;
@@ -10,7 +8,7 @@ html, body, .container {
 }
 
 circle:hover{
-    fill: #ff0000;
+    fill: green;
 }
 
 svg g g{
@@ -61,10 +59,6 @@ svg g g:hover{
 
 .histo{
     border: #00394f 1px solid;
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 5px;
-    padding-top: 10px;
     margin-right: 5px;
     margin-left: 5px;
     border-radius: 5px;
